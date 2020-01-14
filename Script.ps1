@@ -58,6 +58,7 @@ Try {
     }
     
     #receive database selection
+    Write-Host "Retrieving database list for $($Server)..."
     $Database=Compare-Object -ReferenceObject (Get-SqlDatabase -ServerInstance $Server | Select-Object -Property Name -ExpandProperty Name) -DifferenceObject $DatabasesToExclude | Select-Object -Property InputObject -ExpandProperty InputObject | Out-GridView -PassThru
 
     #set backup directory
