@@ -52,7 +52,7 @@ Try {
 
     #receive server selection
     $Server=($ServerList | Sort-Object | Out-GridView -PassThru)
-    if (!$Server)
+    if ([string]::IsNullOrWhiteSpace($Server))
     {
         Throw "No server was selected."
     }
@@ -60,6 +60,10 @@ Try {
     #receive database selection
     Write-Host "Retrieving database list for $($Server)..."
     $Database=Compare-Object -ReferenceObject (Get-SqlDatabase -ServerInstance $Server | Select-Object -Property Name -ExpandProperty Name) -DifferenceObject $DatabasesToExclude | Select-Object -Property InputObject -ExpandProperty InputObject | Out-GridView -PassThru
+    if ([string]::IsNullOrWhiteSpace($Database))
+    {
+        Throw "No database was selected."
+    }
 
     #set backup directory
     #this gets the location of the last backup for the database
@@ -94,14 +98,13 @@ Try {
     $Adapter.Fill($Datatable) | Out-Null
     $LocalBackupFileDirectory=$Datatable.Rows[0].Data
 
-    #robocopy the backup to the new location (use instead of move-item because if I don't have permission to delete from the backup file directory robocopy still does the copy but not the delete; move-item just fails)
-    #if I have permissions to delete from the backup file directory then /mov will delete the file after copying it
+    #copy backup to local directory
     Write-Host "Copying backup to local backup location..."
-    robocopy "$($BackupFileDirectory)" "$($LocalBackupFileDirectory)" "$($BackupFileName)" /mov
-    if ($LASTEXITCODE -ne 1)
-    {
-        Throw "Robocopy did not return a success code of 1, it returned a code of $($LASTEXITCODE). See https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy#exit-return-codes. Exiting..."
-    }
+    Copy-Item -Path (Join-Path -Path $BackupFileDirectory -ChildPath $BackupFileName) -Destination (Join-Path -Path $LocalBackupFileDirectory -ChildPath $BackupFileName)
+
+    #delete original backup (comment out if no permission to delete)
+    #Write-Host "Deleting original backup..."
+    #Remove-Item -Path (Join-Path -Path $BackupFileDirectory -ChildPath $BackupFileName)
 
     #drop existing local database
     Write-Host "Dropping local database if it exists..."
