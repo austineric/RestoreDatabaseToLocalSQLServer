@@ -55,7 +55,7 @@ Try {
         SELECT TOP 1 f.physical_device_name
         FROM dbo.backupset s
         JOIN dbo.backupmediafamily f ON (s.media_set_id=f.media_set_id)
-        WHERE s.database_name='ContinuousImprovement'
+        WHERE s.database_name='$($Database)'
         ORDER BY s.backup_finish_date DESC;"
     $Connection1.Open()
     $BackupFileDirectory=([System.IO.DirectoryInfo]$Command1.ExecuteScalar()).Parent.FullName
@@ -77,9 +77,6 @@ Try {
     $Connection2.Open()
     $Adapter.Fill($Datatable) | Out-Null
     $LocalBackupFileDirectory=$Datatable.Rows[0].Data
-
-    #move backup to local backup directory (move-item removes the item from the source directory once copied over)
-    Move-Item -Path (Join-Path -Path $BackupFileDirectory -ChildPath $BackupFileName) -Destination (Join-Path -Path $LocalBackupFileDirectory -ChildPath $BackupFileName)
 
     #robocopy the backup to the new location (use instead of move-item because if I don't have permission to delete from the backup file directory robocopy still does the copy but not the delete; move-item just fails)
     #if I have permissions to delete from the backup file directory then /mov will delete the file after copying it
