@@ -35,7 +35,7 @@ Try {
     }
 
     #retrieve server list from environmental variable
-    $ServerList=$Env:ServerList.Split(",")
+    $ServerList=$Env:SQLServerList.Split(",")
 
     #receive server selection
     $Server=($ServerList | Sort-Object | Out-GridView -PassThru)
